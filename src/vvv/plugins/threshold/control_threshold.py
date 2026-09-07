@@ -4,6 +4,7 @@ import dearpygui.dearpygui as dpg
 from typing import Optional
 from vvv.plugins.plugin_api import PluginAPI, PluginTagMixin
 from vvv.maths.contours import ContourROI
+from vvv.utils import compute_adaptive_step_and_speed
 
 
 class ThresholdState:
@@ -372,7 +373,8 @@ class ThresholdController(PluginTagMixin):
 
         state = self.get_image_state(viewer.image_id)
         current_val = state.threshold_min if is_min else state.threshold_max
-        step_size = max(0.1, viewer.view_state.display.ww * 0.02) if viewer.view_state else 1.0
+        ww_val = viewer.view_state.display.ww if viewer.view_state else 1.0
+        step_size, _, _ = compute_adaptive_step_and_speed(ww_val)
         new_val = current_val + (step_size * direction)
 
         if hasattr(viewer.volume, "_cached_min_val"):

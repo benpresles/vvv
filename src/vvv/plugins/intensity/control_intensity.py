@@ -4,6 +4,7 @@ import numpy as np
 import dearpygui.dearpygui as dpg
 from vvv.plugins.plugin_api import PluginAPI, PluginTagMixin
 from vvv.config import WL_PRESETS, COLORMAPS
+from vvv.utils import compute_adaptive_step_and_speed
 
 if TYPE_CHECKING:
     from .ui_intensity import IntensityUI
@@ -194,16 +195,14 @@ class IntensityController(PluginTagMixin):
             if has_image and viewer.view_state
             else 1.0
         )
-        if ww_val is None:
-            ww_val = 1.0
-        dynamic_speed = max(0.1, ww_val * 0.005)
+        _, dynamic_speed, dpg_fmt = compute_adaptive_step_and_speed(ww_val)
         for t in [
             self._t("drag_ww"),
             self._t("drag_wl"),
             self._t("drag_min_threshold"),
         ]:
             if dpg.does_item_exist(t):
-                dpg.configure_item(t, speed=dynamic_speed)
+                dpg.configure_item(t, speed=dynamic_speed, format=dpg_fmt)
 
         if has_image and not is_rgb:
             vs = viewer.view_state
@@ -976,11 +975,8 @@ class IntensityController(PluginTagMixin):
         direction = user_data["dir"]
         current_val = dpg.get_value(target_tag) or 0.0
         viewer = self._api.get_active_viewer()
-        step_size = (
-            max(0.1, viewer.view_state.display.ww * 0.02)
-            if (viewer and viewer.view_state)
-            else 1.0
-        )
+        ww_val = viewer.view_state.display.ww if (viewer and viewer.view_state) else 1.0
+        step_size, _, _ = compute_adaptive_step_and_speed(ww_val)
         new_val = current_val + step_size * direction
         if target_tag == self._t("drag_ww"):
             new_val = max(1e-5, new_val)

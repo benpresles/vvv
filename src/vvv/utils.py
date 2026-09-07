@@ -38,6 +38,42 @@ def fmt(values, precision=3):
     return " ".join([f"{round(float(x), precision):g}" for x in items])
 
 
+def compute_adaptive_step_and_speed(ww, default_ww=1.0):
+    """Computes (step_size, drag_speed, dpg_format) adapted to the intensity range (window width).
+
+    Ensures that for large intensity ranges (e.g. CT: 400 HU), standard ranges (e.g. MRI: 1000),
+    and very small ranges (e.g. Dose maps: 0.05 Gy or 2 Gy), the + / - buttons, drag speed,
+    and number formatting scale seamlessly without coarse jumps or precision loss.
+    """
+    try:
+        val = float(ww) if ww is not None else float(default_ww)
+        if not np.isfinite(val) or val <= 0:
+            safe_ww = float(default_ww)
+        else:
+            safe_ww = val
+    except (TypeError, ValueError):
+        safe_ww = float(default_ww)
+
+    safe_ww = max(1e-12, safe_ww)
+    step_size = safe_ww * 0.02
+    drag_speed = safe_ww * 0.005
+
+    if safe_ww >= 100.0:
+        dpg_format = "%.1f"
+    elif safe_ww >= 10.0:
+        dpg_format = "%.2f"
+    elif safe_ww >= 1.0:
+        dpg_format = "%.3f"
+    elif safe_ww >= 0.01:
+        dpg_format = "%.4f"
+    elif safe_ww >= 0.0001:
+        dpg_format = "%.6f"
+    else:
+        dpg_format = "%.4e"
+
+    return step_size, drag_speed, dpg_format
+
+
 def format_pixel_value(val, vol, time_idx, dvf_precision=2):
     """Format a pixel/voxel value as a human-readable string.
 

@@ -2,6 +2,7 @@ import time
 import threading
 import dearpygui.dearpygui as dpg
 from vvv.ui.ui_components import build_section_title, build_stepped_slider, build_help_button, build_beginner_tooltip
+from vvv.utils import compute_adaptive_step_and_speed
 
 
 class FusionUI:
@@ -250,9 +251,9 @@ class FusionUI:
                         if not dpg.is_item_active("drag_fusion_wl"):
                             dpg.set_value("drag_fusion_wl", ov_vs.display.wl)
                         
-                        dynamic_speed = max(0.1, ov_vs.display.ww * 0.005)
-                        dpg.configure_item("drag_fusion_ww", speed=dynamic_speed)
-                        dpg.configure_item("drag_fusion_wl", speed=dynamic_speed)
+                        _, dynamic_speed, dpg_fmt = compute_adaptive_step_and_speed(ov_vs.display.ww)
+                        dpg.configure_item("drag_fusion_ww", speed=dynamic_speed, format=dpg_fmt)
+                        dpg.configure_item("drag_fusion_wl", speed=dynamic_speed, format=dpg_fmt)
 
                     thr = ov_vs.display.min_threshold
                     has_thr = thr is not None
@@ -298,8 +299,8 @@ class FusionUI:
                     dpg.configure_item("btn_drag_fusion_threshold_plus", enabled=thr_enabled)
                 
                 if has_overlay and ov_vs:
-                    dynamic_speed = max(0.1, ov_vs.display.ww * 0.005)
-                    dpg.configure_item("drag_fusion_threshold", speed=dynamic_speed)
+                    _, dynamic_speed, dpg_fmt = compute_adaptive_step_and_speed(ov_vs.display.ww)
+                    dpg.configure_item("drag_fusion_threshold", speed=dynamic_speed, format=dpg_fmt)
 
             if dpg.does_item_exist("combo_fusion_mode"):
                 is_ov_dvf = False
@@ -372,6 +373,11 @@ class FusionUI:
 
         # 1. Overlay W/L (from Overlay's ViewState)
         if not ov_vs.volume.is_rgb and not getattr(ov_vs.volume, "is_dvf", False):
+            _, dynamic_speed, dpg_fmt = compute_adaptive_step_and_speed(ov_vs.display.ww)
+            for t in ["drag_fusion_ww", "drag_fusion_wl", "drag_fusion_threshold"]:
+                if dpg.does_item_exist(t):
+                    dpg.configure_item(t, speed=dynamic_speed, format=dpg_fmt)
+
             if dpg.does_item_exist("drag_fusion_ww") and not dpg.is_item_active("drag_fusion_ww"):
                 current_ww = dpg.get_value("drag_fusion_ww")
                 new_ww = ov_vs.display.ww
@@ -489,7 +495,7 @@ class FusionUI:
         if viewer and viewer.view_state and viewer.view_state.display.overlay.image_id:
             ovs = self.controller.view_states.get(viewer.view_state.display.overlay.image_id)
             if ovs:
-                step_size = max(0.1, ovs.display.ww * 0.02)
+                step_size, _, _ = compute_adaptive_step_and_speed(ovs.display.ww)
                 
         current_val = dpg.get_value(target_tag)
         new_val = current_val + (step_size * direction)

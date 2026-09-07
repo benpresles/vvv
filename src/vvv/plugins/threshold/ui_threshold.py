@@ -1,6 +1,7 @@
 import numpy as np
 import dearpygui.dearpygui as dpg
 from vvv.ui.ui_components import build_section_title, build_stepped_slider, build_help_button, build_beginner_tooltip
+from vvv.utils import compute_adaptive_step_and_speed
 from .control_threshold import ThresholdController
 from vvv.plugins.plugin_api import PluginTagMixin
 
@@ -267,11 +268,11 @@ class ThresholdUI(PluginTagMixin):
                 dpg.configure_item(preview_context_tag, show=False)
 
         # Update sliders min/max/speed bounds
-        speed = max(0.1, viewer.view_state.display.ww * 0.005)
+        _, speed, dpg_fmt = compute_adaptive_step_and_speed(viewer.view_state.display.ww)
         for tag in [self._t("drag_ext_threshold_min"), self._t("drag_ext_threshold_max")]:
             if dpg.does_item_exist(tag):
                 dpg.configure_item(
-                    tag, min_value=vol._cached_min_val, max_value=vol._cached_max_val + 1.0, speed=speed
+                    tag, min_value=vol._cached_min_val, max_value=vol._cached_max_val + 1.0, speed=speed, format=dpg_fmt
                 )
 
         # Context Switch Snap

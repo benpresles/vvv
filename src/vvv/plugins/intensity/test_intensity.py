@@ -176,6 +176,13 @@ class TestIntensityPlugin(unittest.TestCase):
         # ww step is ww * 0.02 = 2.0. So 100 + 2.0 = 102.0
         self.assertEqual(self.mock_viewer.view_state.display.ww, 102.0)
 
+        # Test small intensity range (e.g. dose map with ww = 0.05 Gy)
+        self.mock_viewer.view_state.display.ww = 0.05
+        dpg.set_value(tag, 0.05)
+        c.on_step_button_clicked(None, None, {"tag": tag, "dir": 1})
+        # ww step is 0.05 * 0.02 = 0.001. So 0.05 + 0.001 = 0.051
+        self.assertAlmostEqual(self.mock_viewer.view_state.display.ww, 0.051, places=6)
+
     def test_drag_lower_upper_level_callbacks(self):
         c = self.plugin._controller
 
