@@ -30,7 +30,7 @@ memory = [
 ]
 
 [tool.setuptools.package-data]
-"vvv" = ["fonts/*.otf"]
+"vvv" = ["fonts/*", "icons/*"]
 
 [tool.setuptools]
 package-dir = {"" = "src"}
