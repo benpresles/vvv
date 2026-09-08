@@ -21,6 +21,10 @@ class ROIState:
         self.volume_id = volume_id
         self.name = name
         self.color = color
+        if color is not None:
+            self.color = [max(0, min(255, int(c))) for c in color[:3]]
+        else:
+            self.color = [255, 0, 0]
         self.opacity = 0.5
         self.visible = True
         self.is_contour = False
@@ -91,6 +95,8 @@ class ROIState:
     def from_dict(self, d):
         self.name = d.get("name", self.name)
         self.color = d.get("color", self.color)
+        if "color" in d and d["color"] is not None:
+            self.color = [max(0, min(255, int(c))) for c in d["color"][:3]]
         self.opacity = d.get("opacity", self.opacity)
         self.visible = d.get("visible", self.visible)
         self.is_contour = d.get("is_contour", self.is_contour)

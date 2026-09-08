@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, patch
 import dearpygui.dearpygui as dpg
 import os
 from vvv.plugins.roi.plugin_roi import RoiPlugin
+from vvv.core.roi_manager import ROIState
 
 
 class MockROI:
@@ -2325,6 +2326,35 @@ class TestRoiPlugin(unittest.TestCase):
             self.assertEqual(rois["roi_1"].source_mode, "Target FG (val)")
             self.assertEqual(rois["roi_1"].source_val, 1.0)
             self.assertIsNone(rois["roi_1"].rtstruct_info)
+
+        dpg.delete_item("test_parent")
+
+    def test_roi_rgba_color_handling(self):
+        """Test that ROI state with 4-element RGBA color is safely normalized and rendered in UI."""
+        if not dpg.is_dearpygui_running():
+            dpg.create_context()
+        with dpg.window(tag="test_parent"):
+            self.plugin.create_ui(parent="test_parent", api=self.mock_api)
+
+        ui = self.plugin._ui
+        ctrl = self.plugin._controller
+
+        # ROI with RGBA color list [255, 128, 64, 200]
+        roi = ROIState("vol_1", "Lesion", [255, 128, 64, 200])
+        self.assertEqual(roi.color, [255, 128, 64])
+
+        rois = {"roi_rgba": roi}
+        mock_viewer = MockViewer("img_1", rois)
+        self.mock_api.get_active_viewer.return_value = mock_viewer
+
+        ctrl.on_roi_selected("roi_rgba")
+        ui.refresh_rois_ui()
+        ui.refresh_roi_detail_ui()
+
+        # From dict with RGBA
+        roi2 = ROIState("vol_2", "Lesion2", [255, 0, 0])
+        roi2.from_dict({"name": "Lesion2", "color": [10, 20, 30, 255]})
+        self.assertEqual(roi2.color, [10, 20, 30])
 
         dpg.delete_item("test_parent")
 

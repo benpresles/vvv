@@ -575,7 +575,7 @@ class RoiPluginUI(PluginTagMixin):
                     lbl_eye = "\uf070"
 
                 dpg.add_color_edit(
-                    default_value=roi.color + [255],
+                    default_value=list(roi.color[:3]) + [255],
                     no_inputs=True,
                     no_label=True,
                     no_alpha=True,
@@ -792,6 +792,7 @@ class RoiPluginUI(PluginTagMixin):
             with dpg.theme(tag=theme_tag):
                 with dpg.theme_component(dpg.mvSliderFloat):
                     r, g, b = getattr(roi_state, "color", [255, 0, 0])
+                    r, g, b = getattr(roi_state, "color", [255, 0, 0])[:3]
                     dpg.add_theme_color(dpg.mvThemeCol_SliderGrab, [r, g, b, 255])
                     dpg.add_theme_color(
                         dpg.mvThemeCol_SliderGrabActive,
@@ -1543,6 +1544,8 @@ class RoiPluginUI(PluginTagMixin):
         with dpg.theme_component(dpg.mvWindowAppItem, parent=theme_tag):
             dpg.add_theme_color(dpg.mvThemeCol_TitleBg, roi.color + [255])
             dpg.add_theme_color(dpg.mvThemeCol_TitleBgActive, roi.color + [255])
+            dpg.add_theme_color(dpg.mvThemeCol_TitleBg, list(roi.color[:3]) + [255])
+            dpg.add_theme_color(dpg.mvThemeCol_TitleBgActive, list(roi.color[:3]) + [255])
             dpg.add_theme_color(dpg.mvThemeCol_Text, text_color)
 
         content_theme_tag = self._t(f"stats_content_theme_{roi_id}")
@@ -1643,7 +1646,7 @@ class RoiPluginUI(PluginTagMixin):
         with dpg.group(horizontal=True, parent=parent_tag):
             # Color Picker
             color_picker = dpg.add_color_edit(
-                default_value=roi.color + [255],
+                default_value=list(roi.color[:3]) + [255],
                 no_inputs=True,
                 no_label=True,
                 no_alpha=True,
@@ -2399,6 +2402,7 @@ class RoiPluginUI(PluginTagMixin):
         color_picker_tag = self._t(f"stats_color_picker_{roi_id}")
         if dpg.does_item_exist(color_picker_tag):
             dpg.set_value(color_picker_tag, roi.color + [255])
+            dpg.set_value(color_picker_tag, list(roi.color[:3]) + [255])
 
         # Update slider theme matching active ROI color
         slider_theme_tag = self._t(f"stats_slider_theme_{roi_id}")
@@ -2607,6 +2611,8 @@ class RoiPluginUI(PluginTagMixin):
                 with dpg.theme_component(dpg.mvWindowAppItem, parent=theme_tag):
                     dpg.add_theme_color(dpg.mvThemeCol_TitleBg, roi.color + [255])
                     dpg.add_theme_color(dpg.mvThemeCol_TitleBgActive, roi.color + [255])
+                    dpg.add_theme_color(dpg.mvThemeCol_TitleBg, list(roi.color[:3]) + [255])
+                    dpg.add_theme_color(dpg.mvThemeCol_TitleBgActive, list(roi.color[:3]) + [255])
                     dpg.add_theme_color(dpg.mvThemeCol_Text, text_color)
 
                 dpg.bind_item_theme(win_tag, theme_tag)
