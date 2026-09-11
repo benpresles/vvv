@@ -1076,33 +1076,53 @@ def load_workspace_sequence(gui, controller, filepath):
                             except Exception:
                                 sidecar_dict = {}
 
+                        sidecar_labels, sidecar_colors = _parse_label_map_json(
+                            sidecar_dict
+                        )
+
                         for val_str, l_info in labels_dict.items():
                             val = float(val_str)
-                            sidecar_info = (
-                                sidecar_dict.get(val_str)
-                                or sidecar_dict.get(int(val))
-                                or {}
-                            )
-                            name = (
-                                sidecar_info.get("name")
-                                or l_info.get("name")
-                                or f"Label {val_str}"
-                            )
+                            val_int = int(val)
+                            if isinstance(l_info, dict):
+                                name = (
+                                    sidecar_labels.get(val_int)
+                                    or l_info.get("name")
+                                    or f"Label {val_str}"
+                                )
+                                raw_col = sidecar_colors.get(val_int) or l_info.get(
+                                    "color"
+                                )
+                                opacity = l_info.get("opacity", 0.5)
+                                visible = l_info.get("visible", True)
+                                is_contour = l_info.get("is_contour", False)
+                                thickness = l_info.get("thickness", 1.0)
+                            else:
+                                name = sidecar_labels.get(val_int) or (
+                                    str(l_info) if l_info else f"Label {val_str}"
+                                )
+                                raw_col = sidecar_colors.get(val_int)
+                                opacity = 0.5
+                                visible = True
+                                is_contour = False
+                                thickness = 1.0
+
                             color = (
-                                sidecar_info.get("color")
-                                or l_info.get("color")
-                                or [255, 0, 0]
+                                [int(c) for c in raw_col[:3]]
+                                if isinstance(raw_col, (list, tuple))
+                                and len(raw_col) >= 3
+                                else [255, 0, 0]
                             )
+
                             state = {
                                 "source_mode": "Target FG (val)",
                                 "source_val": val,
                                 "source_type": "Label Map",
                                 "name": name,
                                 "color": color,
-                                "opacity": l_info.get("opacity", 0.5),
-                                "visible": l_info.get("visible", True),
-                                "is_contour": l_info.get("is_contour", False),
-                                "thickness": l_info.get("thickness", 1.0),
+                                "opacity": opacity,
+                                "visible": visible,
+                                "is_contour": is_contour,
+                                "thickness": thickness,
                             }
                             valid_rois_to_load.append(
                                 {

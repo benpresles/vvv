@@ -596,6 +596,77 @@ def test_load_workspace_label_maps_with_sidecar_priority(tmp_path):
     assert r2.opacity == 0.6
 
 
+def test_load_workspace_label_maps_with_flat_string_sidecar(tmp_path):
+    """Test loading a workspace where sidecar JSON has flat string values {'1': 'Liver'}."""
+    import json
+    from unittest.mock import MagicMock
+    from vvv.core.controller import Controller
+    from vvv.ui.ui_sequences import load_workspace_sequence
+
+    # 1. Base image
+    base_file = tmp_path / "base2.nii.gz"
+    base_img = sitk.GetImageFromArray(np.zeros((10, 10, 10), dtype=np.uint8))
+    sitk.WriteImage(base_img, str(base_file))
+
+    # 2. Label map
+    label_arr = np.zeros((10, 10, 10), dtype=np.uint8)
+    label_arr[2:5, 2:5, 2:5] = 1
+    labels_img = sitk.GetImageFromArray(label_arr)
+    labels_file = tmp_path / "labels2.nii.gz"
+    sitk.WriteImage(labels_img, str(labels_file))
+
+    # 3. Flat string sidecar JSON: {"1": "Flat_Liver"}
+    sidecar_json = tmp_path / "labels2.json"
+    with open(sidecar_json, "w") as f:
+        json.dump({"1": "Flat_Liver"}, f)
+
+    # 4. Workspace JSON
+    ws_data = {
+        "version": 1.0,
+        "workspace_path": str(tmp_path / "test_flat.vvw"),
+        "viewers": {},
+        "images": {
+            "1": {
+                "path": str(base_file),
+                "display": {},
+                "camera": {},
+                "extraction": {},
+                "dvf": {},
+                "label_maps": [
+                    {
+                        "path": str(labels_file),
+                        "labels": {
+                            "1": {
+                                "name": "Old_Name",
+                                "color": [255, 0, 0],
+                            }
+                        },
+                    }
+                ],
+                "rois": [],
+            }
+        },
+    }
+    ws_file = tmp_path / "test_flat.vvw"
+    with open(ws_file, "w") as f:
+        json.dump(ws_data, f)
+
+    # 5. Load workspace
+    controller = Controller()
+    controller.viewers = {
+        "V1": MagicMock(image_id=None, view_state=None),
+    }
+    gui = MagicMock()
+    gen = load_workspace_sequence(gui, controller, str(ws_file))
+    list(gen)
+
+    base_id = list(controller.view_states.keys())[0]
+    vs = controller.view_states[base_id]
+    assert len(vs.rois) == 1
+    r1 = list(vs.rois.values())[0]
+    assert r1.name == "Flat_Liver"
+
+
 def test_save_and_load_workspace_viewport_layout(tmp_path):
     """Test that workspace saving and loading preserves the layout_mode (1, 2, 4) and active_viewer."""
     import json
